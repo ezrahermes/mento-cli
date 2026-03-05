@@ -6,6 +6,7 @@ import { registerQuoteCommand } from './commands/quote.js';
 import { registerTradingCommand } from './commands/trading.js';
 import { registerInfoCommand } from './commands/info.js';
 import { registerSwapCommand } from './commands/swap.js';
+import { registerCacheCommand } from './commands/cache.js';
 
 const program = new Command();
 
@@ -25,5 +26,6 @@ registerQuoteCommand(program);
 registerTradingCommand(program);
 registerInfoCommand(program);
 registerSwapCommand(program);
+registerCacheCommand(program);
 
 program.parse();
