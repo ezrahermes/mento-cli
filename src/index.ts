@@ -4,6 +4,7 @@ import { registerRoutesCommand } from './commands/routes.js';
 import { registerPoolsCommand } from './commands/pools.js';
 import { registerQuoteCommand } from './commands/quote.js';
 import { registerTradingCommand } from './commands/trading.js';
+import { registerInfoCommand } from './commands/info.js';
 
 const program = new Command();
 
@@ -21,5 +22,6 @@ registerRoutesCommand(program);
 registerPoolsCommand(program);
 registerQuoteCommand(program);
 registerTradingCommand(program);
+registerInfoCommand(program);
 
 program.parse();
