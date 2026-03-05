@@ -1,0 +1,29 @@
+{
+  "name": "mento-cli",
+  "version": "0.1.0",
+  "description": "CLI tool for the Mento Protocol — inspect tokens, routes, pools, get quotes, and execute swaps",
+  "type": "commonjs",
+  "bin": {
+    "mento": "./bin/mento.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@mento-protocol/mento-sdk": "^3.0.0",
+    "chalk": "^4.1.2",
+    "cli-table3": "^0.6.5",
+    "commander": "^12.0.0",
+    "viem": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
