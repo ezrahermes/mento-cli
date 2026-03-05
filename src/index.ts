@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import { registerTokensCommand } from './commands/tokens.js';
 import { registerRoutesCommand } from './commands/routes.js';
 import { registerPoolsCommand } from './commands/pools.js';
+import { registerQuoteCommand } from './commands/quote.js';
 
 const program = new Command();
 
@@ -17,5 +18,6 @@ program
 registerTokensCommand(program);
 registerRoutesCommand(program);
 registerPoolsCommand(program);
+registerQuoteCommand(program);
 
 program.parse();
