@@ -9,6 +9,7 @@ import { registerTradingCommand } from './commands/trading.js';
 import { registerInfoCommand } from './commands/info.js';
 import { registerSwapCommand } from './commands/swap.js';
 import { registerCacheCommand } from './commands/cache.js';
+import { showBanner } from './lib/banner.js';
 
 const pkg = JSON.parse(
   readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'),
@@ -33,5 +34,12 @@ registerTradingCommand(program);
 registerInfoCommand(program);
 registerSwapCommand(program);
 registerCacheCommand(program);
+
+// Show branded banner when run with no arguments
+const args = process.argv.slice(2);
+if (args.length === 0) {
+  showBanner();
+  process.exit(0);
+}
 
 program.parse();

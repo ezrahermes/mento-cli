@@ -1,6 +1,20 @@
 # mento-cli
 
-Command-line interface for the [Mento Protocol](https://mento.org). Wraps the Mento SDK v3 to let you inspect tokens, routes, pools, get quotes, check trading status, and execute swaps — all from the terminal.
+> CLI for the Mento Protocol — onchain FX infrastructure
+
+A command-line interface that wraps [@mento-protocol/mento-sdk](https://github.com/mento-protocol/mento-sdk) v3, bringing the full power of Mento's onchain FX protocol to your terminal. Inspect tokens, discover routes, get quotes, and execute swaps — all without leaving the command line.
+
+## Overview
+
+**mento-cli** ports the v2-era helper scripts into a structured, ergonomic CLI built on Commander.js. It connects directly to the Celo blockchain (or any supported chain) via the Mento SDK, giving you real-time access to:
+
+- Protocol tokens and their on-chain supply
+- Trading routes between token pairs
+- Liquidity pool details and configuration
+- Live swap quotes with multi-route comparison
+- On-chain token swaps with slippage controls
+- Trading status and circuit-breaker limits
+- Protocol metadata and contract addresses
 
 ## Installation
 
@@ -8,153 +22,232 @@ Command-line interface for the [Mento Protocol](https://mento.org). Wraps the Me
 # Install globally
 npm install -g mento-cli
 
-# Or run without installing
+# Or run directly without installing
 npx mento-cli
 ```
 
-Requires Node.js >= 18.
+Requires **Node.js >= 18**.
 
 ## Quick Start
 
 ```bash
-# List stable tokens on Celo mainnet
+# Show all Mento stable tokens
 mento tokens
+
+# Discover available trading routes
+mento routes
 
 # Get a quote for swapping 100 USDm to CELO
 mento quote USDm CELO 100
 
-# Show protocol info
+# Show protocol overview
 mento info
 ```
 
-## Global Options
-
-| Option | Description | Default |
-|---|---|---|
-| `-c, --chain <name-or-id>` | Chain name (`celo`, `celo-sepolia`) or numeric chain ID | `celo` |
-| `--rpc <url>` | Custom RPC endpoint URL | (chain default) |
-| `--json` | Output as JSON instead of formatted tables | `false` |
-| `-V, --version` | Print version | |
-| `-h, --help` | Show help | |
-
 ## Commands
 
-### tokens
+### `mento tokens`
 
 List tokens known to the Mento Protocol.
 
 ```bash
 mento tokens                # List stable tokens (default)
 mento tokens --collateral   # List collateral assets
-mento tokens --all          # List both stable and collateral
+mento tokens --all          # List both stable and collateral tokens
 mento tokens --json         # Output as JSON
 ```
 
-### routes
+| Flag | Description |
+|---|---|
+| `--collateral` | Show collateral assets instead of stable tokens |
+| `--all` | Show all tokens (stable + collateral) |
 
-List available trading routes between token pairs.
+---
+
+### `mento routes`
+
+Discover trading routes between token pairs.
 
 ```bash
-mento routes                        # List all routes
-mento routes --from USDm --to CELO  # Filter routes by pair
-mento routes --direct               # Show only direct routes
-mento routes --fresh                # Bypass cache, fetch from chain
+mento routes                        # List all available routes
+mento routes --from USDm --to CELO  # Filter routes by token pair
+mento routes --direct               # Show only direct (single-hop) routes
+mento routes --fresh                # Bypass cache, fetch live from chain
 mento routes --graph                # Show route graph visualization
 ```
 
-### pools
+| Flag | Description |
+|---|---|
+| `--direct` | Show only direct routes (no multi-hop) |
+| `--from <token>` | Filter by source token symbol |
+| `--to <token>` | Filter by destination token symbol |
+| `--fresh` | Skip cache and fetch routes from chain |
+| `--graph` | Display an ASCII route graph |
 
-List liquidity pools and their details.
+---
+
+### `mento pools`
+
+Inspect liquidity pools and their configuration.
 
 ```bash
-mento pools                          # List all pools
-mento pools --type VirtualPool       # Filter by pool type
-mento pools --details <pool-addr>    # Show detailed pool info
-mento pools --json                   # Output as JSON
+mento pools                        # List all pools
+mento pools --type VirtualPool     # Filter by pool type
+mento pools --details <address>    # Show detailed info for a specific pool
+mento pools --json                 # Output as JSON
 ```
 
-### quote
+| Flag | Description |
+|---|---|
+| `--type <type>` | Filter pools by type (e.g., `VirtualPool`) |
+| `--details <address>` | Show detailed configuration for a pool |
 
-Get a swap quote for a token pair and amount.
+---
+
+### `mento quote`
+
+Get swap quotes for a token pair and amount.
 
 ```bash
-mento quote USDm CELO 100            # Quote 100 USDm → CELO
-mento quote CELO USDm 50             # Quote 50 CELO → USDm
-mento quote USDm CELO 100 --all-routes   # Compare across all routes
-mento quote USDm CELO 100 --json     # Output as JSON
+mento quote USDm CELO 100               # Quote 100 USDm → CELO
+mento quote CELO USDm 50                # Quote 50 CELO → USDm
+mento quote USDm CELO 100 --all-routes  # Compare quotes across all routes
+mento quote USDm CELO 100 --json        # Output as JSON
 ```
 
-### swap
+**Positional arguments:** `<from> <to> <amount>`
+
+| Flag | Description |
+|---|---|
+| `--all-routes` | Show quotes from all available routes for comparison |
+
+---
+
+### `mento swap`
 
 Execute a token swap on-chain.
 
 ```bash
-mento swap USDm CELO 100 --private-key 0x...   # Swap 100 USDm for CELO
-mento swap USDm CELO 100 --keyfile ./key.txt    # Use keyfile for signing
-mento swap USDm CELO 100 --dry-run              # Preview without sending
+mento swap USDm CELO 100 --private-key 0x...   # Swap with inline key
+mento swap USDm CELO 100 --keyfile ./key.txt    # Swap with keyfile
+mento swap USDm CELO 100 --dry-run              # Preview without sending tx
 mento swap USDm CELO 100 --slippage 1 --yes     # 1% slippage, skip prompt
 ```
 
-| Option | Description | Default |
-|---|---|---|
-| `--private-key <key>` | Private key for signing | |
-| `--keyfile <path>` | Path to file containing private key | |
-| `--slippage <percent>` | Slippage tolerance in percent | `0.5` |
-| `--deadline <minutes>` | Transaction deadline in minutes | `5` |
-| `--dry-run` | Output CallParams as JSON without sending | |
-| `-y, --yes` | Skip confirmation prompt | |
+**Positional arguments:** `<from> <to> <amount>`
 
-### trading
+| Flag | Description | Default |
+|---|---|---|
+| `--private-key <key>` | Private key for transaction signing | — |
+| `--keyfile <path>` | Path to file containing private key | — |
+| `--slippage <percent>` | Maximum slippage tolerance (%) | `0.5` |
+| `--deadline <minutes>` | Transaction deadline in minutes | `5` |
+| `--dry-run` | Output CallParams as JSON without sending | — |
+| `-y, --yes` | Skip the confirmation prompt | — |
+
+---
+
+### `mento trading`
 
 Check trading status and limits.
 
 ```bash
-mento trading status                # Check all routes trading status
+mento trading status                # Check trading status for all routes
 mento trading status USDm CELO     # Check if a specific pair is tradable
 mento trading limits               # Show trading limits for all pools
 mento trading limits --json        # Output limits as JSON
 ```
 
-### info
+**Subcommands:** `status`, `limits`
+
+---
+
+### `mento info`
 
 Show protocol overview and contract addresses.
 
 ```bash
 mento info                          # Protocol overview (pools, routes, tokens)
 mento info --contracts              # List all known contract addresses
-mento info --chain celo-sepolia     # Show info for Celo Sepolia testnet
+mento info --chain celo-sepolia     # Show info for testnet
 mento info --json                   # Output as JSON
 ```
 
-### cache
+| Flag | Description |
+|---|---|
+| `--contracts` | List all known Mento contract addresses |
+
+---
+
+### `mento cache`
 
 Refresh cached protocol data from the blockchain.
 
 ```bash
-mento cache routes    # Refresh routes cache
-mento cache tokens    # Refresh tokens cache
+mento cache routes    # Refresh the routes cache
+mento cache tokens    # Refresh the tokens cache
 ```
+
+**Subcommands:** `routes`, `tokens`
+
+## Global Options
+
+These flags can be used with any command:
+
+| Option | Description | Default |
+|---|---|---|
+| `-c, --chain <name-or-id>` | Chain name (`celo`, `celo-sepolia`) or numeric chain ID | `celo` |
+| `--rpc <url>` | Custom RPC endpoint URL | Chain default |
+| `--json` | Output as JSON instead of formatted tables | `false` |
+| `-V, --version` | Print version | — |
+| `-h, --help` | Show help for a command | — |
+
+## Multi-Chain Support
+
+mento-cli supports multiple chains via the `--chain` flag. Pass a chain name or numeric chain ID:
+
+```bash
+# Celo mainnet (default)
+mento tokens
+
+# Celo Sepolia testnet
+mento tokens --chain celo-sepolia
+
+# By chain ID
+mento tokens --chain 44787
+
+# With a custom RPC endpoint
+mento info --chain celo --rpc https://my-rpc.example.com
+```
+
+The chain registry maps chain names to their chain IDs and default RPC endpoints. The SDK handles chain-specific contract addresses automatically.
 
 ## Examples
 
 ```bash
-# Use Celo Sepolia testnet
-mento tokens --chain celo-sepolia
-
-# Use a custom RPC endpoint
-mento info --rpc https://my-rpc.example.com
-
-# Pipe JSON output to jq
-mento tokens --json | jq '.[] | .symbol'
-
-# Quote and swap workflow
+# Full workflow: inspect → quote → swap
+mento tokens --all
+mento routes --from USDm --to CELO
 mento quote USDm CELO 100
 mento swap USDm CELO 100 --private-key 0x... --slippage 0.5
+
+# Pipe JSON output to jq for scripting
+mento tokens --json | jq '.[] | .symbol'
+mento quote USDm CELO 100 --json | jq '.amountOut'
+
+# Check if trading is active before swapping
+mento trading status USDm CELO
+
+# Refresh cached data if results seem stale
+mento cache routes
+mento cache tokens
 ```
 
-## Full Specification
+## Links
 
-See [docs/PRD.md](docs/PRD.md) for the complete product requirements document.
+- **SDK**: [github.com/mento-protocol/mento-sdk](https://github.com/mento-protocol/mento-sdk)
+- **Protocol**: [mento.org](https://mento.org)
+- **PRD**: [docs/PRD.md](docs/PRD.md)
 
 ## License
 
