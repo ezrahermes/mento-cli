@@ -6,7 +6,7 @@ A command-line interface that wraps [@mento-protocol/mento-sdk](https://github.c
 
 ## Overview
 
-**mento-cli** ports the v2-era helper scripts into a structured, ergonomic CLI built on Commander.js. It connects directly to the Celo blockchain (or any supported chain) via the Mento SDK, giving you real-time access to:
+**mento-cli** is a structured, ergonomic CLI built on Commander.js. It connects directly to the Celo blockchain (or any supported chain) via the Mento SDK, giving you real-time access to:
 
 - Protocol tokens and their on-chain supply
 - Trading routes between token pairs
