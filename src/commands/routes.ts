@@ -10,6 +10,7 @@ interface RoutesOptions {
   from?: string;
   to?: string;
   fresh?: boolean;
+  graph?: boolean;
 }
 
 function routeToRow(route: Route | RouteWithCost): string[] {
@@ -34,6 +35,99 @@ function routeToData(route: Route | RouteWithCost): Record<string, unknown> {
   };
 }
 
+/**
+ * Resolve the symbol for a token address using the chain's token registry.
+ * Falls back to an abbreviated address if the token is not found.
+ */
+function symbolForAddress(chainId: number, address: string): string {
+  const token = resolveToken(chainId, address);
+  return token ? token.symbol : `${address.slice(0, 6)}...`;
+}
+
+/**
+ * Build a list of edges (symbol pairs) for a route.
+ * Direct routes produce one edge; multi-hop routes produce edges through
+ * intermediate tokens.
+ */
+function routeToEdges(
+  route: Route | RouteWithCost,
+  chainId: number,
+): Array<[string, string]> {
+  const edges: Array<[string, string]> = [];
+
+  if (route.path.length === 1) {
+    // Direct route – single edge between the two endpoint tokens
+    edges.push([route.tokens[0].symbol, route.tokens[1].symbol]);
+  } else {
+    // Multi-hop: walk through pools to discover intermediate tokens
+    const endpointA = route.tokens[0].symbol;
+    const endpointB = route.tokens[1].symbol;
+
+    // Determine order by finding which endpoint is in the first pool
+    const firstPool = route.path[0];
+    const firstPoolTokens = [
+      firstPool.token0.toLowerCase(),
+      firstPool.token1.toLowerCase(),
+    ];
+
+    // Start from the endpoint that appears in the first pool
+    let currentAddr: string;
+    if (firstPoolTokens.includes(route.tokens[0].address.toLowerCase())) {
+      currentAddr = route.tokens[0].address.toLowerCase();
+    } else {
+      currentAddr = route.tokens[1].address.toLowerCase();
+    }
+
+    let currentSymbol =
+      currentAddr === route.tokens[0].address.toLowerCase()
+        ? endpointA
+        : endpointB;
+
+    for (const pool of route.path) {
+      const poolToken0 = pool.token0.toLowerCase();
+      const poolToken1 = pool.token1.toLowerCase();
+
+      // The next token in the hop is the one in this pool that isn't the current token
+      const nextAddr =
+        poolToken0 === currentAddr ? poolToken1 : poolToken0;
+      const nextSymbol = symbolForAddress(chainId, nextAddr);
+
+      edges.push([currentSymbol, nextSymbol]);
+
+      currentAddr = nextAddr;
+      currentSymbol = nextSymbol;
+    }
+  }
+
+  return edges;
+}
+
+/**
+ * Generate a Mermaid flowchart diagram string from a list of routes.
+ */
+function buildMermaidGraph(
+  routes: Array<Route | RouteWithCost>,
+  chainId: number,
+): string {
+  const edgeSet = new Set<string>();
+  const lines: string[] = ['graph LR'];
+
+  for (const route of routes) {
+    const edges = routeToEdges(route, chainId);
+    for (const [a, b] of edges) {
+      // Normalise edge key so A---B and B---A are deduplicated
+      const key = [a, b].sort().join('---');
+      if (!edgeSet.has(key)) {
+        edgeSet.add(key);
+        const [left, right] = [a, b].sort();
+        lines.push(`  ${left} --- ${right}`);
+      }
+    }
+  }
+
+  return lines.join('\n');
+}
+
 export function registerRoutesCommand(program: Command): void {
   program
     .command('routes')
@@ -42,6 +136,7 @@ export function registerRoutesCommand(program: Command): void {
     .option('--from <symbol>', 'Find route from this token symbol')
     .option('--to <symbol>', 'Find route to this token symbol')
     .option('--fresh', 'Bypass cache and fetch fresh routes from the blockchain')
+    .option('-g, --graph', 'Output a Mermaid flowchart diagram of token connectivity')
     .action(async (options: RoutesOptions) => {
       const globalOpts = program.opts<GlobalOptions>();
 
@@ -49,6 +144,14 @@ export function registerRoutesCommand(program: Command): void {
         const mento = await getMento(globalOpts);
         const jsonMode = globalOpts.json ?? false;
         const chainId = resolveChainId(globalOpts.chain);
+
+        // --graph: output Mermaid flowchart and exit
+        if (options.graph) {
+          const routes = await mento.routes.getRoutes({ cached: !options.fresh });
+          const mermaid = buildMermaidGraph([...routes], chainId);
+          console.log(mermaid);
+          return;
+        }
 
         const headers = ['Route ID', 'Token A', 'Token B', 'Hops', 'Pool Types'];
 
