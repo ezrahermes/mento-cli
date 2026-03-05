@@ -3,6 +3,7 @@ import { registerTokensCommand } from './commands/tokens.js';
 import { registerRoutesCommand } from './commands/routes.js';
 import { registerPoolsCommand } from './commands/pools.js';
 import { registerQuoteCommand } from './commands/quote.js';
+import { registerTradingCommand } from './commands/trading.js';
 
 const program = new Command();
 
@@ -19,5 +20,6 @@ registerTokensCommand(program);
 registerRoutesCommand(program);
 registerPoolsCommand(program);
 registerQuoteCommand(program);
+registerTradingCommand(program);
 
 program.parse();
