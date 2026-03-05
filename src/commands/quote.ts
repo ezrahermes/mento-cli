@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { getMento, resolveChainId, type GlobalOptions } from '../lib/client.js';
 import { formatTokenAmount, output } from '../lib/format.js';
 import { resolveToken } from '../lib/utils.js';
+import { handleError } from '../lib/errors.js';
 import type { Route } from '@mento-protocol/mento-sdk';
 
 interface QuoteOptions {
@@ -32,6 +33,13 @@ export function registerQuoteCommand(program: Command): void {
     .command('quote <tokenIn> <tokenOut> <amount>')
     .description('Get a swap quote between two tokens')
     .option('--all-routes', 'Quote all available routes and rank by output amount')
+    .addHelpText('after', `
+Examples:
+  $ mento quote USDm CELO 100              Get best quote for 100 USDm -> CELO
+  $ mento quote CELO USDm 50               Get best quote for 50 CELO -> USDm
+  $ mento quote USDm CELO 100 --all-routes Compare quotes across all routes
+  $ mento quote USDm CELO 100 --json       Output as JSON
+`)
     .action(async (tokenInSymbol: string, tokenOutSymbol: string, amountStr: string, options: QuoteOptions) => {
       const globalOpts = program.opts<GlobalOptions>();
 
@@ -189,14 +197,7 @@ export function registerQuoteCommand(program: Command): void {
           output(data, headers, rows, jsonMode);
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        const isFxClosed = message.toLowerCase().includes('fxmarket') || message.toLowerCase().includes('market closed');
-        if (isFxClosed) {
-          console.error(chalk.yellow('FX Market is currently closed. Trading is not available.'));
-        } else {
-          console.error(chalk.red(`Error: ${message}`));
-        }
-        process.exit(1);
+        handleError(err);
       }
     });
 }

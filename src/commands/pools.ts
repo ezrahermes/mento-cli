@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { getMento, resolveChainId, type GlobalOptions } from '../lib/client.js';
 import { output, formatAddress } from '../lib/format.js';
 import { resolveToken } from '../lib/utils.js';
+import { handleError } from '../lib/errors.js';
 import type { Pool, PoolDetails, FPMMPoolDetails, VirtualPoolDetails } from '@mento-protocol/mento-sdk';
 
 interface PoolsOptions {
@@ -143,6 +144,14 @@ export function registerPoolsCommand(program: Command): void {
     .description('List liquidity pools in the Mento Protocol')
     .option('--type <type>', 'Filter by pool type: fpmm or virtual')
     .option('--details <address>', 'Show detailed on-chain config for a specific pool address')
+    .addHelpText('after', `
+Examples:
+  $ mento pools                     List all pools
+  $ mento pools --type fpmm         List FPMM pools only
+  $ mento pools --type virtual      List Virtual pools only
+  $ mento pools --details 0x1234... Show detailed config for a specific pool
+  $ mento pools --json              Output as JSON
+`)
     .action(async (options: PoolsOptions) => {
       const globalOpts = program.opts<GlobalOptions>();
 
@@ -194,9 +203,7 @@ export function registerPoolsCommand(program: Command): void {
         const data = pools.map((p) => poolToData(p, chainId));
         output(data, headers, rows, jsonMode);
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        console.error(chalk.red(`Error: ${message}`));
-        process.exit(1);
+        handleError(err);
       }
     });
 }

@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { getMento, type GlobalOptions } from '../lib/client.js';
+import { handleError } from '../lib/errors.js';
 
 export function registerCacheCommand(program: Command): void {
   const cache = program
@@ -25,9 +26,7 @@ export function registerCacheCommand(program: Command): void {
           console.log(chalk.green(`✔ Cached ${count} route(s) from chain.`));
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        console.error(chalk.red(`Error: ${message}`));
-        process.exit(1);
+        handleError(err);
       }
     });
 
@@ -67,9 +66,7 @@ export function registerCacheCommand(program: Command): void {
           );
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        console.error(chalk.red(`Error: ${message}`));
-        process.exit(1);
+        handleError(err);
       }
     });
 }

@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { getMento, type GlobalOptions } from '../lib/client.js';
 import { formatAddress, formatTokenAmount, output } from '../lib/format.js';
+import { handleError } from '../lib/errors.js';
 import type { StableToken, CollateralAsset } from '@mento-protocol/mento-sdk';
 
 interface TokensOptions {
@@ -12,9 +13,16 @@ interface TokensOptions {
 export function registerTokensCommand(program: Command): void {
   program
     .command('tokens')
-    .description('List tokens known to the Mento Protocol')
+    .description('List tokens known to the Mento Protocol (stable tokens by default)')
     .option('-c, --collateral', 'List collateral assets instead of stable tokens')
     .option('-a, --all', 'List both stable tokens and collateral assets')
+    .addHelpText('after', `
+Examples:
+  $ mento tokens              List stable tokens
+  $ mento tokens --collateral List collateral assets
+  $ mento tokens --all        List all tokens (stable + collateral)
+  $ mento tokens --json       Output as JSON
+`)
     .action(async (options: TokensOptions) => {
       const globalOpts = program.opts<GlobalOptions>();
 
@@ -34,9 +42,7 @@ export function registerTokensCommand(program: Command): void {
           await listCollateralAssets(mento, jsonMode);
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        console.error(chalk.red(`Error: ${message}`));
-        process.exit(1);
+        handleError(err);
       }
     });
 }

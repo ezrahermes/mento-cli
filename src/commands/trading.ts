@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { getMento, resolveChainId, type GlobalOptions } from '../lib/client.js';
 import { formatAddress, output } from '../lib/format.js';
 import { resolveToken } from '../lib/utils.js';
+import { handleError } from '../lib/errors.js';
 import type { Pool, TradingLimit, PoolTradabilityStatus } from '@mento-protocol/mento-sdk';
 
 function getTokenSymbol(chainId: number, address: string): string {
@@ -74,7 +75,14 @@ function printLimitRow(limit: TradingLimit, chainId: number): void {
 export function registerTradingCommand(program: Command): void {
   const trading = program
     .command('trading')
-    .description('Check trading status and limits for Mento pools');
+    .description('Check trading status and limits for Mento pools')
+    .addHelpText('after', `
+Examples:
+  $ mento trading status                Check all routes trading status
+  $ mento trading status USDm CELO      Check if USDm/CELO pair is tradable
+  $ mento trading limits                Show trading limits for all pools
+  $ mento trading limits --json         Output limits as JSON
+`);
 
   // mento trading status [tokenA] [tokenB]
   trading
@@ -160,9 +168,7 @@ export function registerTradingCommand(program: Command): void {
         ]);
         output(results, headers, rows, false);
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        console.error(chalk.red(`Error: ${message}`));
-        process.exit(1);
+        handleError(err);
       }
     });
 
@@ -225,9 +231,7 @@ export function registerTradingCommand(program: Command): void {
           console.log(JSON.stringify(allData, null, 2));
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        console.error(chalk.red(`Error: ${message}`));
-        process.exit(1);
+        handleError(err);
       }
     });
 }

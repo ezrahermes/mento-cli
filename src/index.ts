@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { Command } from 'commander';
 import { registerTokensCommand } from './commands/tokens.js';
 import { registerRoutesCommand } from './commands/routes.js';
@@ -8,12 +10,16 @@ import { registerInfoCommand } from './commands/info.js';
 import { registerSwapCommand } from './commands/swap.js';
 import { registerCacheCommand } from './commands/cache.js';
 
+const pkg = JSON.parse(
+  readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'),
+) as { version: string };
+
 const program = new Command();
 
 program
   .name('mento')
   .description('CLI tool for the Mento Protocol')
-  .version('0.1.0')
+  .version(pkg.version)
   .option('-c, --chain <name-or-id>', 'Chain name (celo, celo-sepolia) or chain ID', 'celo')
   .option('--rpc <url>', 'Custom RPC endpoint URL')
   .option('--json', 'Output as JSON instead of formatted tables', false);

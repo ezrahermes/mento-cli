@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { getMento, resolveChainId, type GlobalOptions } from '../lib/client.js';
 import { formatAddress, createTable, output } from '../lib/format.js';
+import { handleError } from '../lib/errors.js';
 import { addresses, type ContractAddresses } from '@mento-protocol/mento-sdk';
 
 const CHAIN_NAMES: Record<number, string> = {
@@ -14,6 +15,13 @@ export function registerInfoCommand(program: Command): void {
     .command('info')
     .description('Show protocol overview and contract addresses')
     .option('--contracts', 'List all known contract addresses')
+    .addHelpText('after', `
+Examples:
+  $ mento info                Show protocol overview (pools, routes, tokens)
+  $ mento info --contracts    List all known contract addresses
+  $ mento info --json         Output as JSON
+  $ mento info --chain celo-sepolia  Show info for Celo Sepolia testnet
+`)
     .action(async (options: { contracts?: boolean }) => {
       const globalOpts = program.opts<GlobalOptions>();
 
@@ -28,9 +36,7 @@ export function registerInfoCommand(program: Command): void {
           await showInfo(mento, chainId, jsonMode);
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        console.error(chalk.red(`Error: ${message}`));
-        process.exit(1);
+        handleError(err);
       }
     });
 }

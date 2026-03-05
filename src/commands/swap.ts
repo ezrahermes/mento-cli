@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { getMento, resolveChainId, type GlobalOptions } from '../lib/client.js';
 import { formatTokenAmount } from '../lib/format.js';
 import { resolveToken } from '../lib/utils.js';
+import { handleError } from '../lib/errors.js';
 import { createWallet, type WalletOptions } from '../lib/wallet.js';
 import { deadlineFromMinutes, type CallParams, type SwapTransaction } from '@mento-protocol/mento-sdk';
 
@@ -52,6 +53,14 @@ export function registerSwapCommand(program: Command): void {
     .option('--deadline <minutes>', 'Transaction deadline in minutes', '5')
     .option('--dry-run', 'Output transaction CallParams as JSON without sending')
     .option('-y, --yes', 'Skip confirmation prompt')
+    .addHelpText('after', `
+Examples:
+  $ mento swap USDm CELO 100 --private-key 0x...   Swap 100 USDm for CELO
+  $ mento swap USDm CELO 100 --keyfile ./key.txt    Swap using a keyfile
+  $ mento swap USDm CELO 100 --dry-run              Preview swap without sending
+  $ mento swap USDm CELO 100 --slippage 1 --yes     Swap with 1% slippage, skip prompt
+  $ mento swap CELO USDm 50 --private-key 0x... --json
+`)
     .action(async (tokenInSymbol: string, tokenOutSymbol: string, amountStr: string, options: SwapCommandOptions) => {
       const globalOpts = program.opts<GlobalOptions>();
 
@@ -242,24 +251,7 @@ export function registerSwapCommand(program: Command): void {
           );
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        const isFxClosed =
-          message.toLowerCase().includes('fxmarket') ||
-          message.toLowerCase().includes('market closed');
-        const isInsufficient =
-          message.toLowerCase().includes('insufficient') ||
-          message.toLowerCase().includes('exceeds balance');
-
-        if (isFxClosed) {
-          console.error(
-            chalk.yellow('FX Market is currently closed. Trading is not available.'),
-          );
-        } else if (isInsufficient) {
-          console.error(chalk.red('Error: Insufficient balance for this swap.'));
-        } else {
-          console.error(chalk.red(`Error: ${message}`));
-        }
-        process.exit(1);
+        handleError(err);
       }
     });
 }

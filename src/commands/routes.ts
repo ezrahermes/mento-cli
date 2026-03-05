@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { getMento, resolveChainId, type GlobalOptions } from '../lib/client.js';
 import { output } from '../lib/format.js';
 import { resolveToken } from '../lib/utils.js';
+import { handleError } from '../lib/errors.js';
 import type { Route, RouteWithCost } from '@mento-protocol/mento-sdk';
 
 interface RoutesOptions {
@@ -137,6 +138,14 @@ export function registerRoutesCommand(program: Command): void {
     .option('--to <symbol>', 'Find route to this token symbol')
     .option('--fresh', 'Bypass cache and fetch fresh routes from the blockchain')
     .option('-g, --graph', 'Output a Mermaid flowchart diagram of token connectivity')
+    .addHelpText('after', `
+Examples:
+  $ mento routes                        List all routes (direct + multi-hop)
+  $ mento routes --direct               List direct (single-hop) routes only
+  $ mento routes --from USDm --to CELO  Find a specific route between two tokens
+  $ mento routes --graph                Output a Mermaid flowchart diagram
+  $ mento routes --fresh                Bypass cache, fetch fresh from chain
+`)
     .action(async (options: RoutesOptions) => {
       const globalOpts = program.opts<GlobalOptions>();
 
@@ -210,9 +219,7 @@ export function registerRoutesCommand(program: Command): void {
           output(data, headers, rows, jsonMode);
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        console.error(chalk.red(`Error: ${message}`));
-        process.exit(1);
+        handleError(err);
       }
     });
 }
