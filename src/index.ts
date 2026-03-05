@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import { registerTokensCommand } from './commands/tokens.js';
+import { registerRoutesCommand } from './commands/routes.js';
 
 const program = new Command();
 
@@ -13,5 +14,6 @@ program
 
 // Register commands
 registerTokensCommand(program);
+registerRoutesCommand(program);
 
 program.parse();
